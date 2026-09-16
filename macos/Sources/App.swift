@@ -182,6 +182,16 @@ struct RedlineApp: App {
     @MainActor
     static func main() {
         if CommandLine.arguments.contains("--self-test") { Matcher.selfTest(); return }
+        if CommandLine.arguments.contains("--smoke-test") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                guard NSApp.windows.contains(where: { $0.isVisible }) else {
+                    fputs("FAIL: no visible application window\n", stderr)
+                    exit(1)
+                }
+                print("PASS: macOS application window created")
+                NSApp.terminate(nil)
+            }
+        }
         RedlineApp.main()
     }
 }
