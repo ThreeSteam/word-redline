@@ -1,0 +1,61 @@
+name: Build Windows and macOS
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test Windows UI
+        shell: pwsh
+        run: |
+          ./windows/build.ps1
+          $process = Start-Process -FilePath './windows/portable/Word Redline.exe' -ArgumentList '/selftest' -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw 'Matching tests failed' }
+          if (!(Test-Path './windows/portable/selftest-result.txt')) { throw 'Missing test result' }
+          Get-Content './windows/portable/selftest-result.txt'
+          Remove-Item -LiteralPath './windows/portable/selftest-result.txt'
+          Compress-Archive -LiteralPath './windows/portable' -DestinationPath './Word-Redline-2.0-Windows-Portable.zip'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: Word-Redline-2.0-Windows-Portable.zip
+          if-no-files-found: error
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build universal App and run matching tests
+        run: bash macos/build.sh
+      - name: Confirm both processor architectures
+        run: lipo -info 'macos/build/Word Redline.app/Contents/MacOS/WordRedline'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: macos/build/Word-Redline-2.0-macOS-Universal.zip
+          if-no-files-found: error
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+      - name: Publish both platform downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            release-assets/windows/*.zip release-assets/macos/*.zip \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Word Redline 2.0 — Windows & macOS" \
+            --notes-file docs/release-2.0.md --prerelease

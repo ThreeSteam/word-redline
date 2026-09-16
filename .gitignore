@@ -1,0 +1,9 @@
+macos/build/
+*.log
+.DS_Store
+selftest-result.txt
+test-error.txt
+batch-result.json
+*.json.owner
+*.json.phase
+*.json.result

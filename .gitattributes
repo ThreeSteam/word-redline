@@ -1,0 +1,10 @@
+*.swift text eol=lf
+*.applescript text eol=lf
+*.sh text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
+*.plist text eol=lf
+*.ps1 text eol=crlf
+*.cs text eol=crlf
+*.exe binary
+*.zip binary
