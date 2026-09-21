@@ -4,7 +4,7 @@
 
 ## 下载
 
-**[前往 Releases 下载两个平台版本](https://github.com/ThreeSteam/word-redline-windows/releases)**
+**[前往 Releases 下载两个平台版本](https://github.com/ThreeSteam/word-redline/releases)**
 
 | 平台 | 下载文件 | 运行要求 | 验证状态 |
 | --- | --- | --- | --- |
@@ -43,7 +43,7 @@ docs/                 分平台说明与发布说明
 .github/workflows/    双平台构建、测试和发布
 ```
 
-仓库沿用最初确认的 `word-redline-windows` 名称，内部已按双平台组织。平台特有的 Word 连接与界面实现分别维护，用户流程、配对规则与命名保持一致。
+仓库按 Windows 和 macOS 双平台组织。平台特有的 Word 连接与界面实现分别维护，用户流程、配对规则与命名保持一致。
 
 ## 从源码构建
 
