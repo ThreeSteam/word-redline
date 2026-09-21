@@ -1,4 +1,4 @@
-# Word Redline 2.0
+﻿# Word Redline
 
 **Windows / macOS 双平台 Word 文档比对工具。** 拖入新旧文件，核对配对后点击开始，调用 Microsoft Word 原生比较功能，自动保存带修订标记的 Redline 文档。
 
@@ -8,7 +8,7 @@
 
 | 平台 | 下载文件 | 运行要求 | 验证状态 |
 | --- | --- | --- | --- |
-| Windows | `Word-Redline-2.0-Windows-Portable.zip` | Windows 10/11 + Word 桌面版 | 已验证实际 Word 批量比对 |
+| Windows | `Word-Redline-2.1-Windows-Portable.zip` | Windows 10/11 + Word 桌面版 | 已验证实际 Word 批量比对 |
 | macOS | `Word-Redline-2.0-macOS-Universal.zip` | macOS 13+ + Word for Mac | 预览版；实际 Word 比对待实机验证 |
 
 绿色版无需安装本工具；完整解压后运行 EXE 或 App。Mac 包支持 Apple Silicon 和 Intel。**两版都不包含 Office，必须安装 Microsoft Word。**
@@ -32,7 +32,7 @@
 
 ```text
 windows/
-  src/Redline.cs       Windows Forms 界面、配对与批量调度
+  src/FluentApp.cs     Windows WPF 界面与批量调度
   portable/           可直接使用的 Windows 绿色版
   build.ps1           Windows 编译脚本
 macos/
@@ -70,3 +70,6 @@ bash macos/build.sh
 - Mac 实际 Word 比较尚待实机验证，且未进行 Apple Developer ID 签名或公证。构建及配对测试通过不等于 Word 全流程已验证。
 
 上传内容只包含程序、源码与说明，不包含实际工作文档、测试协议或本地任务日志。
+
+## Windows 2.1
+Windows 11 风格界面、新应用图标，以及可选的自定义输出子文件夹（默认名称 Legal）。开关默认关闭。macOS 当前仍为 2.0。

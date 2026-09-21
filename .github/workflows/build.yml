@@ -20,11 +20,11 @@ jobs:
           if (!(Test-Path './windows/portable/selftest-result.txt')) { throw 'Missing test result' }
           Get-Content './windows/portable/selftest-result.txt'
           Remove-Item -LiteralPath './windows/portable/selftest-result.txt'
-          Compress-Archive -LiteralPath './windows/portable' -DestinationPath './Word-Redline-2.0-Windows-Portable.zip'
+          Compress-Archive -LiteralPath './windows/portable' -DestinationPath './Word-Redline-2.1-Windows-Portable.zip'
       - uses: actions/upload-artifact@v4
         with:
           name: windows
-          path: Word-Redline-2.0-Windows-Portable.zip
+          path: Word-Redline-2.1-Windows-Portable.zip
           if-no-files-found: error
   macos:
     runs-on: macos-14
@@ -44,7 +44,7 @@ jobs:
           if-no-files-found: error
   release:
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [windows, macos]
+    needs: [windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -53,12 +53,12 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: release-assets
-      - name: Publish both platform downloads
+      - name: Publish Windows download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" \
-            release-assets/windows/*.zip release-assets/macos/*.zip \
+            release-assets/windows/*.zip \
             --repo "$GITHUB_REPOSITORY" \
-            --title "Word Redline 2.0 — Windows & macOS" \
-            --notes-file docs/release-2.0.md --prerelease
+            --title "Word Redline 2.1 — Windows" \
+            --notes-file docs/release-2.1.md

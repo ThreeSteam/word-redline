@@ -5,6 +5,7 @@ if (!(Test-Path -LiteralPath $compiler)) {
 }
 if (!(Test-Path -LiteralPath $compiler)) { throw '.NET Framework C# compiler was not found.' }
 $output = Join-Path $PSScriptRoot 'portable\Word Redline.exe'
-& $compiler /nologo /target:winexe "/out:$output" /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Web.Extensions.dll (Join-Path $PSScriptRoot 'src\Redline.cs')
+$framework = Split-Path $compiler
+& $compiler /nologo /target:winexe "/out:$output" /reference:System.Web.Extensions.dll "/reference:$framework\WPF\PresentationFramework.dll" "/reference:$framework\WPF\PresentationCore.dll" "/reference:$framework\WPF\WindowsBase.dll" /reference:System.Xaml.dll "/resource:$PSScriptRoot\src\MainWindow.xaml,MainWindow.xaml" "/resource:$PSScriptRoot\assets\logo.png,logo.png" "/resource:$PSScriptRoot\assets\app.ico,app.ico" "/win32icon:$PSScriptRoot\assets\app.ico" (Join-Path $PSScriptRoot 'src\FluentApp.cs') (Join-Path $PSScriptRoot 'src\Matching.cs')
 if ($LASTEXITCODE -ne 0) { throw 'Build failed. Close Word Redline before rebuilding.' }
 Write-Output "Built: $output"

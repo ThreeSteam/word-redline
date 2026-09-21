@@ -15,6 +15,14 @@ if ($JobFile) {
         }
         if ($job.Old -eq $job.New) { throw '请提供两个不同的文件。' }
         $folder = [IO.Path]::GetDirectoryName($job.New)
+        if ($job.UseSubfolder) {
+            $name = if ($null -eq $job.SubfolderName) { 'Legal' } else { [string]$job.SubfolderName }
+            if ([string]::IsNullOrWhiteSpace($name) -or $name -ne $name.Trim() -or $name.EndsWith('.') -or $name -in @('.','..') -or $name.Length -gt 255 -or $name.IndexOfAny([IO.Path]::GetInvalidFileNameChars()) -ge 0 -or $name -match '^(CON|PRN|AUX|NUL|COM[1-9¹²³]|LPT[1-9¹²³])(?:\.|$)') {
+                throw '子文件夹名称无效，请使用单个文件夹名称，不要包含路径或特殊字符。'
+            }
+            $folder = Join-Path $folder $name
+            [void][IO.Directory]::CreateDirectory($folder)
+        }
         $stem = [IO.Path]::GetFileNameWithoutExtension($job.New)
         $tempOutput = Join-Path $folder ('redline-tmp-' + [guid]::NewGuid().ToString('N') + '.docx')
         SetPhase '启动独立 Word 实例'
@@ -107,4 +115,3 @@ if ($JobFile) {
     }
     exit
 }
-
