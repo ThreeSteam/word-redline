@@ -20,11 +20,11 @@ jobs:
           if (!(Test-Path './windows/portable/selftest-result.txt')) { throw 'Missing test result' }
           Get-Content './windows/portable/selftest-result.txt'
           Remove-Item -LiteralPath './windows/portable/selftest-result.txt'
-          Compress-Archive -LiteralPath './windows/portable' -DestinationPath './Word-Redline-2.1-Windows-Portable.zip'
+          Compress-Archive -LiteralPath './windows/portable' -DestinationPath './Word-Redline-2.2-Windows-Portable.zip'
       - uses: actions/upload-artifact@v4
         with:
           name: windows
-          path: Word-Redline-2.1-Windows-Portable.zip
+          path: Word-Redline-2.2-Windows-Portable.zip
           if-no-files-found: error
   macos:
     runs-on: macos-14
@@ -60,5 +60,5 @@ jobs:
           gh release create "$GITHUB_REF_NAME" \
             release-assets/windows/*.zip \
             --repo "$GITHUB_REPOSITORY" \
-            --title "Word Redline 2.1 — Windows" \
-            --notes-file docs/release-2.1.md
+            --title "Word Redline 2.2 — Windows" \
+            --notes-file docs/release-2.2.md

@@ -8,4 +8,8 @@ $output = Join-Path $PSScriptRoot 'portable\Word Redline.exe'
 $framework = Split-Path $compiler
 & $compiler /nologo /target:winexe "/out:$output" /reference:System.Web.Extensions.dll "/reference:$framework\WPF\PresentationFramework.dll" "/reference:$framework\WPF\PresentationCore.dll" "/reference:$framework\WPF\WindowsBase.dll" /reference:System.Xaml.dll "/resource:$PSScriptRoot\src\MainWindow.xaml,MainWindow.xaml" "/resource:$PSScriptRoot\assets\logo.png,logo.png" "/resource:$PSScriptRoot\assets\app.ico,app.ico" "/win32icon:$PSScriptRoot\assets\app.ico" (Join-Path $PSScriptRoot 'src\FluentApp.cs') (Join-Path $PSScriptRoot 'src\Matching.cs')
 if ($LASTEXITCODE -ne 0) { throw 'Build failed. Close Word Redline before rebuilding.' }
+$icons = Join-Path $PSScriptRoot 'portable\Icons'
+[void][IO.Directory]::CreateDirectory($icons)
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'assets\app.ico') -Destination (Join-Path $icons 'Word Redline.ico') -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'assets\logo.png') -Destination (Join-Path $icons 'Word Redline.png') -Force
 Write-Output "Built: $output"

@@ -1,6 +1,13 @@
 ﻿param([string]$JobFile, [switch]$SmokeTest)
 $ErrorActionPreference = 'Stop'
 
+function GetSourceHash([string]$Path) {
+    $stream = [IO.File]::OpenRead($Path)
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { return [BitConverter]::ToString($sha.ComputeHash($stream)).Replace('-', '') }
+    finally { $sha.Dispose(); $stream.Dispose() }
+}
+
 if ($JobFile) {
     $word = $oldDoc = $newDoc = $result = $null
     $tempOutput = $null
@@ -58,6 +65,28 @@ if ($JobFile) {
         SetPhase '比较文档'
         $result = $word.CompareDocuments($oldDoc, $newDoc, 2, 1, $true, $true, $true, $true, $true, $true, $true, $true, $true, $true, 'Redline', $true)
         $result.ShowRevisions = $true
+        $revisionCount = [int]$result.Revisions.Count
+        $noDifference = $revisionCount -eq 0
+        if ($noDifference) {
+            SetPhase '保存无差别记录'
+            $tempOutput = Join-Path $folder ('redline-tmp-' + [guid]::NewGuid().ToString('N') + '.txt')
+            $record = @(
+                'Word Redline 2.2 比对记录'
+                '比对结论：新旧文件无差别（Word 本次比较检测到 0 项修订）。'
+                ('比对完成时间：' + [DateTimeOffset]::Now.ToString('yyyy-MM-dd HH:mm:ss zzz'))
+                ('旧版文件名：' + [IO.Path]::GetFileName($job.Old))
+                ('旧版完整路径：' + $job.Old)
+                ('新版文件名：' + [IO.Path]::GetFileName($job.New))
+                ('新版完整路径：' + $job.New)
+                ('旧版 SHA-256：' + (GetSourceHash $job.Old))
+                ('新版 SHA-256：' + (GetSourceHash $job.New))
+                ('Microsoft Word 版本：' + $word.Version)
+                '比较范围：字符级；格式、大小写、空格、表格、页眉页脚、脚注尾注、文本框、域、批注和移动。'
+                '说明：此结论表示 Word 本次比较未检测到修订，不表示两个文件的二进制内容完全一致。'
+                '本 TXT 为本地比对留痕，可编辑，不是数字签名或防篡改凭证。'
+            ) -join "`r`n"
+            [IO.File]::WriteAllText($tempOutput, $record + "`r`n", (New-Object Text.UTF8Encoding($true)))
+        } else {
         SetPhase '保存修订结果'
 
         # Export the complete native comparison package, bypassing Word Save As hooks.
@@ -90,18 +119,20 @@ if ($JobFile) {
             $stream = $zip.CreateEntry('[Content_Types].xml').Open()
             try { $contentTypes.Save($stream) } finally { $stream.Dispose() }
         } finally { $zip.Dispose() }
-        $revisionCount = $result.Revisions.Count
+        }
         $result.Close(0)
         [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($result)
         $result = $null
         $index = 1
+        $label = if ($noDifference) { '无差别' } else { 'redline' }
+        $extension = if ($noDifference) { '.txt' } else { '.docx' }
         while ($true) {
-            $suffix = if ($index -eq 1) { ' - redline' } else { " - redline ($index)" }
-            $output = Join-Path $folder ($stem + $suffix + '.docx')
+            $suffix = if ($index -eq 1) { " - $label" } else { " - $label ($index)" }
+            $output = Join-Path $folder ($stem + $suffix + $extension)
             try { [IO.File]::Move($tempOutput, $output); break }
             catch [IO.IOException] { if ([IO.File]::Exists($output)) { $index++; continue }; throw }
         }
-        @{ Success = $true; Output = $output; Revisions = $revisionCount } | ConvertTo-Json | Set-Content -LiteralPath ($JobFile + '.result') -Encoding UTF8
+        @{ Success = $true; Output = $output; Revisions = $revisionCount; NoDifference = $noDifference } | ConvertTo-Json | Set-Content -LiteralPath ($JobFile + '.result') -Encoding UTF8
     } catch {
         @{ Success = $false; Error = $_.Exception.Message } | ConvertTo-Json | Set-Content -LiteralPath ($JobFile + '.result') -Encoding UTF8
     } finally {

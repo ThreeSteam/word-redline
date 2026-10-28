@@ -8,7 +8,7 @@
 
 | 平台 | 下载文件 | 运行要求 | 验证状态 |
 | --- | --- | --- | --- |
-| Windows | `Word-Redline-2.1-Windows-Portable.zip` | Windows 10/11 + Word 桌面版 | 已验证实际 Word 批量比对 |
+| Windows | `Word-Redline-2.2-Windows-Portable.zip` | Windows 10/11 + Word 桌面版 | 已验证实际 Word 批量比对 |
 | macOS | `Word-Redline-2.0-macOS-Universal.zip` | macOS 13+ + Word for Mac | 预览版；实际 Word 比对待实机验证 |
 
 绿色版无需安装本工具；完整解压后运行 EXE 或 App。Mac 包支持 Apple Silicon 和 Intel。**两版都不包含 Office，必须安装 Microsoft Word。**
@@ -73,3 +73,6 @@ bash macos/build.sh
 
 ## Windows 2.1
 Windows 11 风格界面、新应用图标，以及可选的自定义输出子文件夹（默认名称 Legal）。开关默认关闭。macOS 当前仍为 2.0。
+
+## Windows 2.2
+无修订时生成 `新版文件名 - 无差别.txt` 留痕，单组弹窗提示、批量统一汇总；支持原目录和自定义子文件夹保存，重名自动编号。参见 [2.2 更新说明](docs/release-2.2.md)。

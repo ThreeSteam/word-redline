@@ -1,6 +1,6 @@
-<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+﻿<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Word Redline 2.1" Width="1140" Height="880" MinWidth="980" MinHeight="880"
+        Title="Word Redline 2.2" Width="1140" Height="880" MinWidth="980" MinHeight="880"
         WindowStartupLocation="CenterScreen" Background="#F3F5F9" Foreground="#192338"
         FontFamily="Segoe UI, Microsoft YaHei UI" FontSize="13" UseLayoutRounding="True" SnapsToDevicePixels="True">
   <Window.Resources>
@@ -69,7 +69,7 @@
     <DockPanel Grid.Row="0">
       <Image x:Name="BrandIcon" Width="40" Height="40" Margin="0,0,12,0"/>
       <StackPanel VerticalAlignment="Center"><TextBlock Text="Word Redline" FontSize="19" FontWeight="SemiBold"/><TextBlock Text="每一处修改，都有迹可循" Foreground="#7F8A9D" FontSize="11" Margin="0,3,0,0"/></StackPanel>
-      <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="#E9EEF8" CornerRadius="12" Padding="12,5"><TextBlock Text="WINDOWS  /  2.1" FontSize="10" Foreground="#657795"/></Border>
+      <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="#E9EEF8" CornerRadius="12" Padding="12,5"><TextBlock Text="WINDOWS  /  2.2" FontSize="10" Foreground="#657795"/></Border>
     </DockPanel>
     <StackPanel Grid.Row="1" VerticalAlignment="Center"><TextBlock Text="轻松比对，清晰交付。" FontSize="27" FontWeight="SemiBold"/><TextBlock Text="添加新旧文档，确认配对，一键生成带修订标记的版本。" Foreground="#718097" Margin="0,7,0,0"/></StackPanel>
     <Grid Grid.Row="2" Margin="0,8,0,0" IsEnabled="{Binding CanEdit}">

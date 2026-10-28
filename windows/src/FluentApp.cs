@@ -68,7 +68,7 @@ public class RedlineModel : Observable {
     readonly Queue<Pair> queue=new Queue<Pair>();
     Process worker; Pair active; string job; DateTime started; bool busy,subfolder;
     string subfolderName="Legal",message="准备好文档后，就可以开始了。",summary="支持多文件批量配对";
-    int total,finished,failed; bool batchSubfolder; string batchFolder; string testDirectory;
+    int total,finished,failed,unchanged; bool batchSubfolder; string batchFolder; string testDirectory;
     public bool CanEdit {get{return !busy;}}
     public bool CanNameFolder {get{return !busy && subfolder;}}
     public bool CanOpen {get{return grid!=null && grid.SelectedItem is Pair && File.Exists(((Pair)grid.SelectedItem).Output);}}
@@ -83,7 +83,7 @@ public class RedlineModel : Observable {
     public string SaveHint {get{
         string error=subfolder?OutputOptions.Validate(subfolderName):null;
         if(error!=null)return error;
-        return subfolder?"结果位置：新版所在文件夹  /  "+subfolderName+"  /  文件名 - redline.docx    ·    不存在时自动创建":"结果保存在各新版文件旁，命名为「文件名 - redline.docx」；重名自动编号。";
+        return (subfolder?"结果位置：新版所在文件夹 / "+subfolderName+"。":"结果保存在各新版文件旁。")+"有修订生成 Redline；无差别生成 TXT 记录；重名自动编号。";
     }}
     public RedlineModel() {OldFiles=new ObservableCollection<FileItem>();NewFiles=new ObservableCollection<FileItem>();OldChoices=new ObservableCollection<Choice>();Pairs=new ObservableCollection<Pair>();timer.Interval=TimeSpan.FromMilliseconds(400);timer.Tick+=(s,e)=>Poll();}
     T Find<T>(string name) where T:FrameworkElement {return (T)Window.FindName(name);}
@@ -143,7 +143,7 @@ public class RedlineModel : Observable {
             if(string.Equals(OldFiles[p.OldIndex].FullPath,p.NewPath,StringComparison.OrdinalIgnoreCase)){Message="新旧版不能是同一个文件。";return false;}
             if(!File.Exists(OldFiles[p.OldIndex].FullPath)||!File.Exists(p.NewPath)){Message="文件已被移动或删除，请重新添加。";return false;}
         }
-        batchSubfolder=UseSubfolder;batchFolder=SubfolderName;total=selected.Length;finished=failed=0;queue.Clear();
+        batchSubfolder=UseSubfolder;batchFolder=SubfolderName;total=selected.Length;finished=failed=unchanged=0;queue.Clear();
         foreach(var p in selected){p.Output=null;p.SetStatus("等待比对","ready");queue.Enqueue(p);}
         Directory.CreateDirectory(session);SetBusy(true);Next();if(busy)timer.Start();return true;
     }
@@ -165,11 +165,11 @@ public class RedlineModel : Observable {
                 active.SetStatus(phase,"ready");Message="正在比对 "+(finished+1)+" / "+total+"  ·  "+active.NewName+"  ·  "+(int)(DateTime.Now-started).TotalSeconds+" 秒";
                 if((DateTime.Now-at).TotalSeconds>(phase=="比较文档"?600:90)){StopOwned();Complete("超时："+phase,null);}return;
             }
-            var r=Read(job+".result");Complete(Convert.ToBoolean(r["Success"])?null:Convert.ToString(r["Error"]),r.ContainsKey("Output")?Convert.ToString(r["Output"]):null);
+            var r=Read(job+".result");Complete(Convert.ToBoolean(r["Success"])?null:Convert.ToString(r["Error"]),r.ContainsKey("Output")?Convert.ToString(r["Output"]):null,r.ContainsKey("NoDifference")&&Convert.ToBoolean(r["NoDifference"]));
         }catch(Exception ex){StopOwned();Complete(ex.Message,null);}
     }
-    void Complete(string error,string output){
-        if(worker!=null){worker.Dispose();worker=null;}active.Output=output;active.SetStatus(error==null?"比对完成":"比对失败",error==null?"success":"error",error??output);if(error!=null)failed++;finished++;Changed("CanOpen","Progress");Next();
+    void Complete(string error,string output,bool noDifference=false){
+        if(worker!=null){worker.Dispose();worker=null;}active.Output=output;active.SetStatus(error==null?(noDifference?"无差别":"存在修订"):"比对失败",error==null?"success":"error",error??output);if(error!=null)failed++;else if(noDifference)unchanged++;finished++;Changed("CanOpen","Progress");Next();
     }
     void StopOwned(){
         if(worker!=null&&!worker.HasExited){worker.Kill();worker.WaitForExit(2000);}
@@ -177,9 +177,11 @@ public class RedlineModel : Observable {
     }
     void Cancel(){timer.Stop();StopOwned();if(worker!=null){worker.Dispose();worker=null;}if(active!=null)active.SetStatus("已停止","pending");foreach(var p in queue)p.SetStatus("未执行","pending");queue.Clear();SetBusy(false);Message="已停止。已生成的结果仍保留在输出文件夹。";}
     void Finish(){
-        timer.Stop();SetBusy(false);Message="已完成  ·  成功 "+(finished-failed)+" 组"+(failed>0?"，失败 "+failed+" 组（悬停状态查看原因）":"")+"。结果已保存"+(batchSubfolder?"到各新版目录下的「"+batchFolder+"」。":"在各新版文件旁。");
-        var first=Pairs.FirstOrDefault(p=>File.Exists(p.Output));if(first!=null)grid.SelectedItem=first;Changed("CanOpen");
-        if(testDirectory!=null){File.WriteAllText(Path.Combine(testDirectory,"batch-result.json"),json.Serialize(new {Total=total,Failed=failed,Outputs=Pairs.Select(p=>p.Output).ToArray()}));Program.ExitCode=failed==0?0:1;Window.Close();}
+        timer.Stop();SetBusy(false);Message="已完成："+(finished-failed-unchanged)+" 组存在修订，"+unchanged+" 组无差别"+(failed>0?"，"+failed+" 组失败（悬停状态查看原因）":"")+"。结果已保存"+(batchSubfolder?"到各新版目录下的「"+batchFolder+"」。":"在各新版文件旁。");
+        var first=Pairs.FirstOrDefault(p=>p.Selected&&File.Exists(p.Output));if(first!=null)grid.SelectedItem=first;Changed("CanOpen");
+        if(testDirectory!=null){File.WriteAllText(Path.Combine(testDirectory,"batch-result.json"),json.Serialize(new {Total=total,Failed=failed,Unchanged=unchanged,Message=Message,Statuses=Pairs.Select(p=>p.Status).ToArray(),Outputs=Pairs.Select(p=>p.Output).ToArray()}));Program.ExitCode=failed==0?0:1;Window.Close();}
+        else if(total==1&&unchanged==1)MessageBox.Show(Window,"新旧文件无差别，已生成比对记录。\n\n"+active.Output,"比对完成",MessageBoxButton.OK,MessageBoxImage.Information);
+        else if(total>1)MessageBox.Show(Window,Message,"批量比对完成",MessageBoxButton.OK,failed>0?MessageBoxImage.Warning:MessageBoxImage.Information);
     }
     void OpenOutput(){var p=grid.SelectedItem as Pair;if(p==null||!File.Exists(p.Output))return;try{Process.Start(new ProcessStartInfo(p.Output){UseShellExecute=true});}catch(Exception ex){Message=ex.Message;}}
     public void Demo(){
